@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#172554">
+<meta name="description" content="Juego educativo de ecuaciones cuadráticas y parábolas.">
+<title>Misión: El desafío de las parábolas</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--navy:#172554;--blue:#2563eb;--cyan:#06b6d4;--ink:#172033;--muted:#64748b;--bg:#f1f5f9;--green:#15803d;--red:#b91c1c}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(135deg,#e0f2fe,#eef2ff 55%,#f5f3ff);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);min-height:100vh}
+header{background:var(--navy);color:white;padding:22px 16px;text-align:center}
+header h1{margin:0;font-size:clamp(1.4rem,4vw,2.2rem)}
+header p{margin:7px 0 0;color:#cbd5e1}
+main{max-width:900px;margin:24px auto;padding:0 14px 40px}
+.panel{background:white;border-radius:20px;padding:clamp(18px,4vw,30px);box-shadow:0 12px 35px #0f172a12;margin-bottom:18px}
+h2{color:var(--navy);margin-top:0}
+button,input{font:inherit}
+button{border:0;border-radius:12px;padding:12px 18px;background:var(--blue);color:white;font-weight:700;cursor:pointer}
+button:hover{filter:brightness(1.08)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{background:#e2e8f0;color:#1e293b}
+button.success{background:var(--green)}
+button.danger{background:#fee2e2;color:#991b1b}
+input[type=text],input[type=number]{width:100%;padding:13px;border:2px solid #cbd5e1;border-radius:10px;margin:8px 0 14px;font-size:1.05rem}
+label{font-weight:650}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.hidden{display:none!important}
+.author{font-size:.9rem;color:#dbeafe}
+.small{font-size:.9rem;color:var(--muted)}
+.progress{height:12px;background:#e2e8f0;border-radius:20px;overflow:hidden;margin:12px 0}
+.progress span{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--blue));width:0;transition:width .3s}
+.stats{display:flex;flex-wrap:wrap;gap:10px}
+.stat{background:#eff6ff;padding:9px 13px;border-radius:12px;font-weight:700;color:#1e40af}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin:15px 0}
+.level{padding:12px;border-radius:12px;background:#f1f5f9;color:#475569;font-size:.9rem}
+.level.active{background:#dbeafe;color:#1d4ed8;outline:2px solid #60a5fa}
+.level.done{background:#dcfce7;color:#166534}
+.question{font-size:1.2rem;font-weight:750;line-height:1.5;margin:16px 0}
+.options{display:grid;gap:10px}
+.option{background:#f8fafc;color:#1e293b;border:2px solid #cbd5e1;text-align:left}
+.option.selected{border-color:var(--blue);background:#dbeafe}
+.feedback{padding:13px;border-radius:12px;margin-top:14px;font-weight:650}
+.feedback.good{background:#dcfce7;color:#166534}
+.feedback.bad{background:#fee2e2;color:#991b1b}
+canvas{width:100%;max-width:600px;height:300px;display:block;margin:14px auto;border:1px solid #cbd5e1;border-radius:12px;background:white}
+.result{text-align:center}
+.result .big{font-size:clamp(2.5rem,8vw,4.5rem);font-weight:850;color:var(--blue);margin:10px}
+footer{text-align:center;color:#64748b;font-size:.85rem;padding:10px}
+@media print{
+ body{background:white}
+ header{background:white;color:#111827;padding:10px}
+ header p,.no-print,#start,#game,#resumeBox,footer{display:none!important}
+ main{margin:0;max-width:none}
+ #finish{display:block!important;box-shadow:none;border:1px solid #ddd}
+ .panel{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header>
+ <h1>🚀 Misión: El desafío de las parábolas</h1>
+ <p>Juego educativo de Pensamiento Matemático III</p>
+ <p class="author">Juego desarrollado por: Jose Adan Reséndiz Gonzalez</p>
+</header>
+<main>
+ <section id="start" class="panel">
+  <h2>¡Bienvenido, explorador matemático!</h2>
+  <p>Escribe tu nombre para registrar tu partida y conservar tu avance en este dispositivo.</p>
+  <label for="studentName">Nombre completo del estudiante</label>
+  <input id="studentName" type="text" maxlength="70" placeholder="Escribe tu nombre">
+  <div class="actions">
+   <button id="newGame">Comenzar nueva partida</button>
+   <button id="installBtn" class="secondary hidden">Instalar aplicación</button>
+  </div>
+  <div id="resumeBox" class="hidden">
+   <hr>
+   <h3>Hay una partida guardada</h3>
+   <p id="savedInfo" class="small"></p>
+   <div class="actions">
+    <button id="continueGame" class="success">Continuar partida</button>
+    <button id="discardGame" class="danger">Borrar avance guardado</button>
+   </div>
+  </div>
+  <p class="small">Tu avance se guarda automáticamente en este navegador. Para recuperarlo, utiliza el mismo dispositivo y navegador.</p>
+ </section>
+
+ <section id="game" class="panel hidden">
+  <div class="stats">
+   <span class="stat" id="nameStat"></span>
+   <span class="stat" id="scoreStat">⭐ 0 puntos</span>
+   <span class="stat" id="hitsStat">✓ 0 aciertos</span>
+  </div>
+  <div class="levels" id="levels"></div>
+  <h2 id="levelTitle"></h2>
+  <p id="levelDescription" class="small"></p>
+  <div class="progress"><span id="progressBar"></span></div>
+  <p class="small" id="questionCount"></p>
+  <div id="graphArea" class="hidden">
+   <canvas id="graph" width="600" height="300" aria-label="Gráfica de una parábola"></canvas>
+  </div>
+  <div class="question" id="questionText"></div>
+  <div id="answerArea"></div>
+  <div id="feedback" aria-live="polite"></div>
+  <div class="actions">
+   <button id="checkBtn">Comprobar respuesta</button>
+   <button id="nextBtn" class="success hidden">Siguiente ejercicio</button>
+   <button id="saveExit" class="secondary">Guardar y salir</button>
+  </div>
+ </section>
+
+ <section id="finish" class="panel result hidden">
+  <h2>🏆 ¡Misión cumplida!</h2>
+  <p>Excelente trabajo, <strong id="finalName"></strong>.</p>
+  <p>Has completado el desafío de las parábolas.</p>
+  <div class="big" id="finalScore">0 puntos</div>
+  <div class="stats" style="justify-content:center">
+   <span class="stat" id="finalHits"></span>
+   <span class="stat" id="finalLevels"></span>
+  </div>
+  <p id="finishDate" class="small"></p>
+  <p><strong>Juego desarrollado por: Jose Adan Reséndiz Gonzalez</strong></p>
+  <p class="small">Evidencia de aprendizaje: conserva esta pantalla mediante una captura o imprímela como PDF.</p>
+  <div class="actions no-print" style="justify-content:center">
+   <button onclick="window.print()">Imprimir / Guardar PDF</button>
+   <button id="playAgain" class="secondary">Nueva partida</button>
+  </div>
+ </section>
+</main>
+<footer>Aplicación educativa · Pensamiento Matemático III · Guarda tu avance automáticamente</footer>
+
+<script>
+"use strict";
+const STORAGE_KEY="misionParabolas_v1";
+const AUTHOR="Jose Adan Reséndiz Gonzalez";
+const levels=[
+ {title:"Nivel 1 · Despeje directo",desc:"Resuelve ecuaciones cuadráticas aislando x² y aplicando raíz cuadrada.",questions:[
+  {q:"Resuelve x² = 49. ¿Cuáles son sus soluciones?",type:"choice",opts:["x = 7 y x = −7","x = 49 y x = −49","x = 7 solamente"],a:0,ex:"Al extraer raíz cuadrada se obtienen x = ±7."},
+  {q:"Resuelve (x − 3)² = 16. Escribe la solución mayor.",type:"number",a:7,ex:"x − 3 = ±4; por tanto x = 7 o x = −1."},
+  {q:"Resuelve 2x² = 32. Escribe la raíz positiva.",type:"number",a:4,ex:"x² = 16; entonces x = ±4."},
+  {q:"¿Cuáles son las soluciones de x² − 81 = 0?",type:"choice",opts:["±9","±81","9 solamente"],a:0,ex:"x² = 81, así que x = ±9."},
+  {q:"Resuelve (x + 2)² = 25. Escribe la solución menor.",type:"number",a:-7,ex:"x + 2 = ±5; las soluciones son 3 y −7."}
+ ]},
+ {title:"Nivel 2 · Factorización",desc:"Encuentra los factores y determina las raíces de cada ecuación.",questions:[
+  {q:"Factoriza x² + 5x + 6 = 0. ¿Cuáles son sus raíces?",type:"choice",opts:["−2 y −3","2 y 3","−1 y −6"],a:0,ex:"(x + 2)(x + 3) = 0."},
+  {q:"Resuelve x² − 7x + 12 = 0. Escribe la raíz menor.",type:"number",a:3,ex:"(x − 3)(x − 4) = 0."},
+  {q:"¿Qué factorización corresponde a x² − 9 = 0?",type:"choice",opts:["(x − 3)(x + 3)","(x − 9)(x + 1)","(x − 3)²"],a:0,ex:"Es una diferencia de cuadrados."},
+  {q:"Resuelve x² + x − 12 = 0. Escribe la raíz positiva.",type:"number",a:3,ex:"(x + 4)(x − 3) = 0."},
+  {q:"Factoriza x² − 10x + 25 = 0. ¿Cuál es la raíz?",type:"number",a:5,ex:"(x − 5)² = 0; raíz doble x = 5."}
+ ]},
+ {title:"Nivel 3 · Fórmula general",desc:"Aplica x = (−b ± √(b² − 4ac)) / 2a.",questions:[
+  {q:"Para x² + 2x − 8 = 0, ¿cuáles son las raíces?",type:"choice",opts:["2 y −4","4 y −2","2 y 4"],a:0,ex:"La fórmula general produce x = 2 y x = −4."},
+  {q:"En 2x² − 5x − 3 = 0, ¿cuál es la raíz positiva?",type:"number",a:3,ex:"Las raíces son 3 y −0.5."},
+  {q:"¿Cuál es el discriminante de x² − 4x + 1 = 0?",type:"number",a:12,ex:"Δ = b² − 4ac = 16 − 4 = 12."},
+  {q:"Si el discriminante es negativo, ¿cuántas raíces reales tiene la ecuación?",type:"choice",opts:["Ninguna","Una","Dos"],a:0,ex:"Un discriminante negativo indica que no hay raíces reales."},
+  {q:"Resuelve x² − 6x + 8 = 0. Escribe la raíz mayor.",type:"number",a:4,ex:"Las raíces son 2 y 4."}
+ ]},
+ {title:"Nivel 4 · Interpretación gráfica",desc:"Observa las parábolas y relaciona su gráfica con vértices, cortes y raíces.",questions:[
+  {q:"Observa la gráfica de y = x² − 4. ¿Cuál es la coordenada x del vértice?",type:"number",a:0,graph:[1,0,-4],ex:"El vértice está en (0, −4)."},
+  {q:"Para y = x² − 4, ¿cuál es el corte con el eje Y?",type:"number",a:-4,graph:[1,0,-4],ex:"Al sustituir x = 0, resulta y = −4."},
+  {q:"Para y = x² − 4, ¿cuáles son las raíces?",type:"choice",opts:["−2 y 2","−4 y 4","0 y 4"],a:0,graph:[1,0,-4],ex:"Los cortes con el eje X son x = −2 y x = 2."},
+  {q:"Observa y = (x − 2)² + 1. ¿Cuál es la coordenada y del vértice?",type:"number",a:1,graph:[1,-4,5],ex:"El vértice es (2, 1)."},
+  {q:"Para y = x² − 2x − 3, ¿cuál es el corte con el eje Y?",type:"number",a:-3,graph:[1,-2,-3],ex:"Al sustituir x = 0, se obtiene y = −3."}
+ ]},
+ {title:"Nivel 5 · Reto integrador",desc:"Combina procedimientos algebraicos y análisis de funciones cuadráticas.",questions:[
+  {q:"Resuelve x² − 5x + 6 = 0. ¿Cuál es la suma de sus raíces?",type:"number",a:5,ex:"Las raíces son 2 y 3; su suma es 5."},
+  {q:"Para y = x² + 6x + 5, ¿cuál es la coordenada x del vértice?",type:"number",a:-3,graph:[1,6,5],ex:"xv = −b/2a = −6/2 = −3."},
+  {q:"¿Qué método permite resolver cualquier ecuación cuadrática ax² + bx + c = 0 con a ≠ 0?",type:"choice",opts:["Fórmula general","Solo despeje directo","Solo diferencia de cuadrados"],a:0,ex:"La fórmula general es aplicable a toda ecuación cuadrática."},
+  {q:"Para y = x² − 8x + 12, ¿cuál es la coordenada y del vértice?",type:"number",a:-4,graph:[1,-8,12],ex:"El vértice está en (4, −4)."},
+  {q:"Para y = x² − 9, ¿cuál es la suma de las raíces?",type:"number",a:0,graph:[1,0,-9],ex:"Las raíces son −3 y 3; su suma es 0."}
+ ]}
+];
+let state=null,selected=null,answered=false,deferredPrompt=null;
+const $=id=>document.getElementById(id);
+function fresh(name){return {name,level:0,question:0,points:0,hits:0,levelHits:[0,0,0,0,0],completed:[false,false,false,false,false],answers:{},finished:false,updated:new Date().toISOString()};}
+function save(){if(!state)return;state.updated=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");}catch(e){return null;}}
+function show(id){["start","game","finish"].forEach(x=>$(x).classList.toggle("hidden",x!==id));}
+function startNew(){
+ const name=$("studentName").value.trim();
+ if(!name){alert("Escribe tu nombre para comenzar.");$("studentName").focus();return;}
+ if(load()&&!confirm("¿Deseas reemplazar la partida guardada por una nueva?"))return;
+ state=fresh(name);save();render();
+}
+function continueSaved(){const s=load();if(!s)return;state=s;render();}
+function render(){
+ if(state.finished){show("finish");renderFinish();return;}
+ show("game");
+ $("nameStat").textContent="👤 "+state.name;
+ $("scoreStat").textContent="⭐ "+state.points+" puntos";
+ $("hitsStat").textContent="✓ "+state.hits+" aciertos";
+ $("levels").innerHTML=levels.map((l,i)=>`<div class="level ${i===state.level?"active":""} ${state.completed[i]?"done":""}">${state.completed[i]?"✓ ":""}${l.title}</div>`).join("");
+ const L=levels[state.level],Q=L.questions[state.question];
+ $("levelTitle").textContent=L.title;$("levelDescription").textContent=L.desc;
+ $("questionCount").textContent=`Ejercicio ${state.question+1} de 5 · Nivel ${state.level+1} de 5`;
+ $("progressBar").style.width=((state.question)/5*100)+"%";
+ $("questionText").textContent=Q.q;
+ $("feedback").innerHTML="";$("nextBtn").classList.add("hidden");$("checkBtn").classList.remove("hidden");$("checkBtn").disabled=false;
+ $("graphArea").classList.toggle("hidden",!Q.graph);
+ if(Q.graph)drawGraph(Q.graph);
+ selected=null;answered=false;
+ const saved=state.answers[state.level+"-"+state.question];
+ if(Q.type==="choice"){
+  $("answerArea").innerHTML='<div class="options">'+Q.opts.map((o,i)=>`<button class="option" data-i="${i}">${String.fromCharCode(65+i)}. ${o}</button>`).join("")+'</div>';
+  document.querySelectorAll(".option").forEach(b=>b.addEventListener("click",()=>{if(answered)return;selected=Number(b.dataset.i);document.querySelectorAll(".option").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");}));
+ }else{
+  $("answerArea").innerHTML='<label for="numericAnswer">Escribe tu respuesta numérica</label><input id="numericAnswer" type="number" step="any" placeholder="Tu respuesta">';
+ }
+ if(saved&&saved.correct){answered=true;showFeedback(true,Q.ex,true);}
+}
+function drawGraph(coef){
+ const c=$("graph"),ctx=c.getContext("2d"),[a,b,d]=coef,w=c.width,h=c.height;
+ ctx.clearRect(0,0,w,h);const xmin=-6,xmax=6,ymin=-8,ymax=10;
+ const X=x=>((x-xmin)/(xmax-xmin))*w,Y=y=>h-((y-ymin)/(ymax-ymin))*h;
+ ctx.strokeStyle="#e2e8f0";ctx.lineWidth=1;
+ for(let x=-6;x<=6;x++){ctx.beginPath();ctx.moveTo(X(x),0);ctx.lineTo(X(x),h);ctx.stroke();}
+ for(let y=-8;y<=10;y+=2){ctx.beginPath();ctx.moveTo(0,Y(y));ctx.lineTo(w,Y(y));ctx.stroke();}
+ ctx.strokeStyle="#475569";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(0),0);ctx.lineTo(X(0),h);ctx.moveTo(0,Y(0));ctx.lineTo(w,Y(0));ctx.stroke();
+ ctx.strokeStyle="#2563eb";ctx.lineWidth=3;ctx.beginPath();
+ for(let px=0;px<=w;px++){let x=xmin+(px/w)*(xmax-xmin),y=a*x*x+b*x+d;if(px===0)ctx.moveTo(px,Y(y));else ctx.lineTo(px,Y(y));}
+ ctx.stroke();ctx.fillStyle="#334155";ctx.font="13px sans-serif";ctx.fillText("y",X(0)+7,14);ctx.fillText("x",w-16,Y(0)-8);
+}
+function check(){
+ if(answered)return;
+ const Q=levels[state.level].questions[state.question];let ok=false;
+ if(Q.type==="choice"){if(selected===null){alert("Selecciona una opción.");return;}ok=selected===Q.a;}
+ else{const v=$("numericAnswer").value;if(v.trim()===""){alert("Escribe un valor numérico.");return;}ok=Math.abs(Number(v)-Q.a)<0.011;}
+ if(ok){
+  const key=state.level+"-"+state.question;
+  const attempts = (state.answers[key]?.attempts || 0) + 1;
+
+  if(attempts === 1){
+    state.points += 100;
+    state.hits++;
+    state.levelHits[state.level]++;
+  }
+
+  state.answers[key]={
+    correct:true,
+    attempts:attempts,
+    points:attempts === 1 ? 100 : 0
+  };
+
+  save();
+  answered=true;
+
+  showFeedback(
+    true,
+    attempts === 1
+      ? Q.ex + " ¡Ganaste 100 puntos por acertar al primer intento!"
+      : Q.ex + " Respuesta correcta, pero sin puntos porque necesitaste más de un intento."
+  );
+}else{
+  const key=state.level+"-"+state.question;
+  const previous=state.answers[key] || {};
+  previous.attempts=(previous.attempts || 0)+1;
+  state.answers[key]=previous;
+  save();
+
+  showFeedback(false,"Respuesta incorrecta. Inténtalo nuevamente. Recuerda que solo el primer intento correcto otorga 100 puntos.");
+}
+}
+function showFeedback(ok,msg,restored=false){
+ $("feedback").innerHTML=`<div class="feedback ${ok?"good":"bad"}">${ok?"¡Correcto! +100 puntos":"Todavía no es correcto"}<br>${msg}</div>`;
+ if(ok){$("checkBtn").classList.add("hidden");$("nextBtn").classList.remove("hidden");}
+ if(restored){$("feedback").innerHTML=`<div class="feedback good">✓ Respuesta correcta guardada.<br>${msg}</div>`;}
+}
+function next(){
+ if(!answered)return;
+ if(state.question<4){state.question++;save();render();return;}
+ if(state.levelHits[state.level]>=4){
+  state.completed[state.level]=true;
+  if(state.level===4){state.finished=true;save();render();return;}
+  state.level++;state.question=0;save();render();
+ }else{
+  $("feedback").innerHTML='<div class="feedback bad">Necesitas al menos 4 aciertos en este nivel para desbloquear el siguiente. Puedes volver a intentar los ejercicios que no resolviste correctamente.</div>';
+  $("nextBtn").classList.add("hidden");$("checkBtn").classList.remove("hidden");
+  // Reinicia el nivel conservando los aciertos ya obtenidos.
+  state.question=0;save();render();
+ }
+}
+function renderFinish(){
+ $("finalName").textContent=state.name;$("finalScore").textContent=state.points+" puntos";
+ $("finalHits").textContent=state.hits+" / 25 aciertos";
+ $("finalLevels").textContent=state.completed.filter(Boolean).length+" / 5 niveles superados";
+ $("finishDate").textContent="Fecha de finalización: "+new Date().toLocaleDateString("es-MX");
+}
+function exitGame(){save();show("start");refreshResume();$("studentName").value=state.name;}
+function refreshResume(){
+ const s=load();$("resumeBox").classList.toggle("hidden",!s||s.finished);
+ if(s&&!s.finished){$("savedInfo").textContent=`${s.name} · Nivel ${s.level+1} · ${s.points} puntos · Guardado: ${new Date(s.updated).toLocaleString("es-MX")}`;}
+}
+function newFromFinish(){if(confirm("¿Comenzar una partida nueva? La partida actual dejará de estar guardada.")){localStorage.removeItem(STORAGE_KEY);state=null;show("start");refreshResume();}}
+$("newGame").addEventListener("click",startNew);
+$("continueGame").addEventListener("click",continueSaved);
+$("discardGame").addEventListener("click",()=>{if(confirm("¿Borrar definitivamente el avance guardado en este dispositivo?")){localStorage.removeItem(STORAGE_KEY);refreshResume();}});
+$("checkBtn").addEventListener("click",check);$("nextBtn").addEventListener("click",next);
+$("saveExit").addEventListener("click",exitGame);$("playAgain").addEventListener("click",newFromFinish);
+window.addEventListener("beforeunload",save);
+const existing=load();if(existing&&!existing.finished){$("studentName").value=existing.name;refreshResume();}
+if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("installBtn").classList.remove("hidden");});
+$("installBtn").addEventListener("click",async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("installBtn").classList.add("hidden");});
+</script>
+</body>
+</html>
